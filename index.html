@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>TTS 对比评测报告 · 自研 vs ElevenLabs V2.5 / V3</title>
+<script>
+history.scrollRestoration = "manual";
+if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+window.scrollTo(0, 0);
+window.addEventListener("pageshow", function () { window.scrollTo(0, 0); });
+window.addEventListener("DOMContentLoaded", function () { window.scrollTo(0, 0); });
+</script>
+<style>
+:root{
+  --bg:#eef2f6; --card:#fff; --ink:#1e293b; --muted:#64748b; --line:#d8e0ea;
+  --el:#3b6ea5; --v3:#1e3a5f; --vv:#2d7a62; --tie:#8b95a5; --accent:#2563a8; --accent-soft:#edf4fb;
+  --warn:#b45309; --warn-bg:#fff7ed; --bad:#c2410c; --bad-bg:#fff1ee;
+  --ok:#0f766e; --ok-bg:#ecfdf8; --win:#0369a1; --win-bg:#e0f2fe;
+  --shadow:0 1px 2px rgba(30,41,59,.04), 0 8px 24px rgba(30,41,59,.05);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"IBM Plex Sans","PingFang SC","Hiragino Sans GB","Noto Sans SC",system-ui,sans-serif;
+  color:var(--ink);background:radial-gradient(1200px 500px at 10% -10%,#dbe7f5 0%,transparent 55%),
+  radial-gradient(900px 400px at 100% 0%,#d8eee6 0%,transparent 50%),var(--bg);line-height:1.6;font-size:15px}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.wrap{max-width:1040px;margin:0 auto;padding:28px 20px 72px}
+header.hero{background:linear-gradient(135deg,#1e3a5f 0%,#2a5080 48%,#2f6b6a 100%);
+  color:#f8fafc;padding:44px 20px 36px;margin:0 0 24px;position:relative;overflow:hidden}
+header.hero .inner{max-width:1040px;margin:0 auto;padding-right:118px}
+header.hero h1{font-family:Georgia,"Songti SC",serif;font-weight:600;
+  font-size:clamp(1.5rem,2.8vw,2.0rem);margin:0 0 8px;letter-spacing:-.02em}
+header.hero .sub{margin:0;opacity:.88;font-size:14.5px}
+.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:999px;padding:4px 12px;font-size:12px}
+.lang-switch{position:fixed;top:16px;right:16px;z-index:80;display:flex;align-items:center;
+  background:rgba(15,23,42,.48);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:3px;
+  box-shadow:0 6px 20px rgba(15,23,42,.18)}
+.lang-switch button{appearance:none;border:0;background:transparent;color:rgba(248,250,252,.82);
+  font:700 12px/1 "IBM Plex Sans","PingFang SC",system-ui,sans-serif;padding:7px 12px;
+  border-radius:999px;cursor:pointer;letter-spacing:.02em}
+.lang-switch button.active{background:#fff;color:#1e3a5f}
+nav.toc{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:14px 18px;margin-bottom:22px;box-shadow:var(--shadow)}
+nav.toc h2{margin:0 0 6px;font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.08em}
+nav.toc ol{margin:0;padding-left:1.15em;columns:2;gap:28px}
+nav.toc li{margin:3px 0;font-size:13.5px}
+@media(max-width:700px){nav.toc ol{columns:1}header.hero .inner{padding-right:0;padding-top:28px}}
+section{background:var(--card);border:1px solid var(--line);border-radius:16px;
+  padding:22px 24px;margin-bottom:18px;box-shadow:var(--shadow)}
+section h2{font-family:Georgia,"Songti SC",serif;font-size:1.28rem;margin:0 0 4px;color:#1e3a5f;
+  display:flex;align-items:center;gap:10px}
+section h2 .n{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;
+  border-radius:8px;background:var(--accent-soft);color:var(--accent);font-size:13px;font-family:inherit;font-weight:700}
+section h3{font-size:1.02rem;margin:20px 0 8px}
+section .lead{color:var(--muted);margin:0 0 14px;font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:800px){.grid2,.grid3,.kpi-row,.dim-grid,.rubric-meta{grid-template-columns:1fr!important}}
+.stat{background:linear-gradient(180deg,#f8fafc,#f1f5f9);border:1px solid var(--line);border-radius:12px;padding:14px 15px}
+.stat.hi{background:linear-gradient(180deg,#eff6ff,#e8f0fe);border-color:#bfdbfe}
+.stat.fail{background:linear-gradient(180deg,#fff7f5,#ffeee9);border-color:#fdbaa8}
+.stat.ok{background:linear-gradient(180deg,#f0fdfa,#e6f7f2);border-color:#99d5c5}
+.stat.win{background:linear-gradient(180deg,#e0f2fe,#f0f9ff);border-color:#7dd3fc}
+.stat .k{font-size:11.5px;color:var(--muted);margin-bottom:4px;font-weight:600}
+.stat .v{font-size:1.35rem;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .s{font-size:12.5px;color:var(--muted);margin-top:5px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:8px 0}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{background:#f1f5f9;font-weight:600;font-size:12px;color:#475569}
+th[rowspan]{vertical-align:middle}
+th[colspan]{text-align:center}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.bar-row{display:grid;grid-template-columns:minmax(140px,220px) 1fr 64px;gap:10px;align-items:center;margin:5px 0;font-size:13px}
+.bar-track{height:9px;background:#e2e8f0;border-radius:6px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#3b6ea5,#2d7a62);border-radius:6px}
+.pref-bar{display:flex;height:24px;border-radius:8px;overflow:hidden;margin:8px 0 4px;font-size:11px;font-weight:700;color:#fff}
+.pref-bar span{display:flex;align-items:center;justify-content:center;min-width:0}
+.pref-el{background:var(--el)}.pref-v3{background:var(--v3)}.pref-vv{background:var(--vv)}.pref-tie{background:var(--tie)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.note{border-radius:10px;padding:12px 14px;margin:12px 0;font-size:13.5px;background:var(--accent-soft);border:1px solid #cfe0f5;color:#1e3a5f}
+.note.exec-note{font-size:15.5px}
+.note p{margin:0 0 8px}.note p:last-child,.note .zh p:last-child,.note .en p:last-child{margin:0}
+.note.warn{background:var(--warn-bg);border-color:#fcd34d;color:#92400e}
+.delta-neg{color:var(--bad);font-weight:700}.delta-pos{color:var(--vv);font-weight:700}.delta-zero{color:var(--muted)}
+.voice-card{border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:12px 0;background:linear-gradient(180deg,#fff,#f8fafc)}
+.voice-card.fail{border-color:#fdbaa8;background:linear-gradient(180deg,#fff,#fff8f6)}
+.voice-card.win{border-color:#7dd3fc;background:linear-gradient(180deg,#fff,#f0f9ff)}
+.voice-card .head{display:flex;align-items:center;gap:10px;margin:0 0 8px;flex-wrap:wrap}
+.voice-card h3{margin:0;font-size:1.1rem}
+.badge{font-size:11px;font-weight:700;padding:2px 9px;border-radius:999px}
+.badge.ok{background:var(--ok-bg);color:var(--ok);border:1px solid #99d5c5}
+.badge.fail{background:var(--bad-bg);color:var(--bad);border:1px solid #fdbaa8}
+.badge.win{background:var(--win-bg);color:var(--win);border:1px solid #7dd3fc}
+details{border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin:10px 0;background:#f8fafc}
+details summary{cursor:pointer;font-weight:600;color:#1e3a5f}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:16px}
+.dim-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin:10px 0}
+.dim{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center}
+.dim.hot{background:#fff7f5;border-color:#fdbaa8}
+.dim.good{background:#ecfdf8;border-color:#99d5c5}
+.dim .n{font-size:11px;color:var(--muted);margin-bottom:2px}
+.dim .el{color:var(--el);font-weight:700}.dim .vv{color:var(--vv);font-weight:700}
+.dim .d{font-size:12px;margin-top:2px}
+.score-scale td:first-child{font-weight:700;width:48px}
+.score-scale tr.anchor td{background:#eff6ff}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0}
+.kpi{border-radius:14px;padding:16px;border:1px solid var(--line)}
+.kpi .label{font-size:13.5px;font-weight:700;color:#000;margin-bottom:6px}
+.kpi .desc{font-size:13px;color:#475569;line-height:1.5}
+.score3{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:3px 0;font-size:13.5px;color:#475569}
+.score3 span:not(.cmp){color:var(--muted);font-weight:600}
+.score3 b{font-variant-numeric:tabular-nums;font-size:1.15rem;color:var(--ink)}
+.score3 .cmp{font-variant-numeric:tabular-nums;font-size:calc(1.15rem - 0.5px);font-weight:400;color:var(--ink)}
+.kpi.max{background:linear-gradient(160deg,#f0fdfa,#f8fafc);border-color:#99d5c5}
+.kpi.leo{background:linear-gradient(160deg,#e0f2fe,#f8fafc);border-color:#7dd3fc}
+.kpi.lori{background:linear-gradient(160deg,#ecfdf8,#f8fafc);border-color:#99d5c5}
+details.rubric{border:1px solid var(--line);border-radius:14px;padding:0;margin:14px 0;background:#fff}
+details.rubric>summary{list-style:none;cursor:pointer;padding:16px 18px;font-weight:700;font-size:1.05rem;color:#1e3a5f;display:flex;align-items:center;justify-content:space-between;gap:12px}
+details.rubric>summary::-webkit-details-marker{display:none}
+details.rubric>summary::after{content:"展开";font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em}
+details.rubric[open]>summary::after{content:"收起"}
+html[data-lang="en"] details.rubric>summary::after{content:"Expand"}
+html[data-lang="en"] details.rubric[open]>summary::after{content:"Collapse"}
+details.rubric .rubric-body{padding:0 18px 16px}
+.rubric .ask{font-size:13.5px;color:#334155;margin:0 0 10px}
+.rubric-meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px}
+.rubric-meta .box{background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px}
+.rubric-meta .box b{display:block;font-size:11px;color:var(--muted);margin-bottom:4px;letter-spacing:.04em}
+.score-scale tr.s1 td:first-child{color:var(--bad)}
+.score-scale tr.s2 td:first-child{color:#c2410c}
+.score-scale tr.s3 td:first-child{color:var(--accent)}
+.score-scale tr.s4 td:first-child{color:var(--ok)}
+.score-scale tr.s5 td:first-child{color:#115e59}
+html[data-lang="en"] .zh{display:none!important}
+html[data-lang="zh"] .en{display:none!important}
+</style>
+</head>
+<body>
+<div class="lang-switch" role="group" aria-label="Language">
+  <button type="button" data-set="zh" class="active">中文</button>
+  <button type="button" data-set="en">EN</button>
+</div>
+<header class="hero"><div class="inner">
+  <h1>
+    <span class="zh">自研TTS已超过正在使用的ElevenLabs V2.5，与ElevenLabs V3看齐</span>
+    <span class="en">In-house TTS has surpassed production ElevenLabs V2.5 and is on par with ElevenLabs V3</span>
+  </h1>
+  <div class="meta">
+    <span class="chip"><span class="zh">使用行业测评MOS方法</span><span class="en">Industry-standard MOS evaluation</span></span>
+    <span class="chip"><span class="zh">盲评 A/B · 142条真实课堂下的教师用语 · 每轮测评共产生1278次标注</span><span class="en">Blind A/B · 142 real classroom teacher lines · 1,278 ratings per evaluation round</span></span>
+  </div>
+</div></header>
+<div class="wrap">
+<nav class="toc">
+  <h2><span class="zh">目录</span><span class="en">Contents</span></h2>
+  <ol>
+    <li><a href="#exec"><span class="zh">核心结论</span><span class="en">Key findings</span></a></li>
+    <li><a href="#compare"><span class="zh">三方对照</span><span class="en">Three-way comparison</span></a></li>
+    <li><a href="#method"><span class="zh">测评方法与评分维度</span><span class="en">Evaluation method and scoring dimensions</span></a></li>
+    <li><a href="#testset"><span class="zh">测试集及覆盖场景</span><span class="en">Test set and covered scenarios</span></a></li>
+    <li><a href="#scenes"><span class="zh">分场景偏好</span><span class="en">Preference by scenario</span></a></li>
+    <li><a href="#source"><span class="zh">数据口径</span><span class="en">Data notes</span></a></li>
+  </ol>
+</nav>
+
+<section id="exec">
+<h2><span class="n">1</span><span class="zh">核心结论</span><span class="en">Key findings</span></h2>
+<div class="note exec-note">
+  <div class="zh">
+    <p>采用行业通用MOS（Mean Opinion Score）测评方法，评估得出：</p>
+    <p><strong>自研TTS具备替换当前正在使用的Elevenlabs V2.5的质量条件</strong>，Leo与Kim音色与Elevenlabs V3的质量基本持平。Max下一步优化重点为消除伪影问题。</p>
+    <p>自研TTS在三个老师音色的“韵律”表现上，明显好于当前使用的V2.5版本，即：<strong>表现得更像老师</strong>。</p>
+    <p>稳定性与伪影方面，更新后的自研Kim明显好于当前V2.5的表现，自研Leo、Max与当前V2.5表现基本持平，即：<strong>自研TTS在表达强情绪类的语句时，更少出现破音、爆音或音色突变类问题，同时，更低概率出现电流音或噪音</strong>。</p>
+    <p>准确性与完整度方面自研TTS与V2.5表现也基本持平，整体处于行业内较高MOS评分水平。</p>
+  </div>
+  <div class="en">
+    <p>Using the industry-standard MOS (Mean Opinion Score) method, we find:</p>
+    <p><strong>In-house TTS is ready to replace the ElevenLabs V2.5 currently in use.</strong> Leo and Kim are essentially on par with ElevenLabs V3. Max’s next priority is removing artifacts.</p>
+    <p>Across all three teacher voices, in-house TTS is clearly stronger than production V2.5 on prosody — <strong>it sounds more like a teacher</strong>.</p>
+    <p>On stability and artifacts, the updated in-house Kim is clearly better than current V2.5; in-house Leo and Max are roughly even with V2.5. That is: <strong>in strong-emotion lines, in-house TTS is less likely to crack, clip, or jump in timbre, and less likely to add hiss or noise</strong>.</p>
+    <p>Accuracy and completeness are also essentially even with V2.5, at a high MOS level for the industry.</p>
+  </div>
+</div>
+<div class="kpi-row">
+  <div class="kpi leo">
+    <div class="label">Leo</div>
+    <div class="desc">
+      <div class="score3"><span><span class="zh">自研TTS</span><span class="en">In-house TTS</span></span><b>4.86</b></div>
+      <div class="score3"><span>V2.5</span><span class="cmp">4.85</span></div>
+      <div class="score3"><span>V3</span><span class="cmp">4.86</span></div>
+    </div>
+  </div>
+  <div class="kpi max">
+    <div class="label">Max</div>
+    <div class="desc">
+      <div class="score3"><span><span class="zh">自研TTS</span><span class="en">In-house TTS</span></span><b>4.71</b></div>
+      <div class="score3"><span>V2.5</span><span class="cmp">4.71</span></div>
+      <div class="score3"><span>V3</span><span class="cmp">4.82</span></div>
+    </div>
+  </div>
+  <div class="kpi lori">
+    <div class="label">Kim</div>
+    <div class="desc">
+      <div class="score3"><span><span class="zh">自研TTS</span><span class="en">In-house TTS</span></span><b>4.81</b></div>
+      <div class="score3"><span>V2.5</span><span class="cmp">4.69</span></div>
+      <div class="score3"><span>V3</span><span class="cmp">4.83</span></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<section id="compare">
+<h2><span class="n">2</span><span class="zh">三方对照</span><span class="en">Three-way comparison</span></h2>
+<h3><span class="zh">关键维度 Δ（自研 − ElevenLabs V2.5与V3）</span><span class="en">Key dimension Δ (in-house − ElevenLabs V2.5 and V3)</span></h3>
+<table>
+<thead><tr>
+  <th><span class="zh">音色</span><span class="en">Voice</span></th>
+  <th><span class="zh">对照</span><span class="en">Pairing</span></th>
+  <th class="num"><span class="zh">准确性</span><span class="en">Accuracy</span></th>
+  <th class="num"><span class="zh">完整度</span><span class="en">Completeness</span></th>
+  <th class="num"><span class="zh">稳定性</span><span class="en">Stability</span></th>
+  <th class="num"><span class="zh">韵律情感</span><span class="en">Prosody &amp; emotion</span></th>
+  <th class="num"><span class="zh">伪影</span><span class="en">Artifacts</span></th>
+</tr></thead>
+<tbody>
+<tr><td><strong>Max</strong></td><td><span class="zh">自研 vs V2.5</span><span class="en">In-house vs V2.5</span></td><td class="num"><span class="delta-neg">−0.06</span></td><td class="num"><span class="delta-neg">−0.13</span></td><td class="num"><span class="delta-zero">−0.04</span></td><td class="num"><span class="delta-pos">+0.27</span></td><td class="num"><span class="delta-zero">−0.02</span></td></tr>
+<tr><td><strong>Max</strong></td><td><span class="zh">自研 vs V3</span><span class="en">In-house vs V3</span></td><td class="num"><span class="delta-zero">−0.02</span></td><td class="num"><span class="delta-zero">+0.00</span></td><td class="num"><span class="delta-neg">−0.17</span></td><td class="num"><span class="delta-neg">−0.09</span></td><td class="num"><span class="delta-neg">−0.24</span></td></tr>
+<tr><td><strong>Leo</strong></td><td><span class="zh">自研 vs V2.5</span><span class="en">In-house vs V2.5</span></td><td class="num"><span class="delta-neg">−0.05</span></td><td class="num"><span class="delta-neg">−0.08</span></td><td class="num"><span class="delta-zero">−0.03</span></td><td class="num"><span class="delta-pos">+0.22</span></td><td class="num"><span class="delta-zero">−0.03</span></td></tr>
+<tr><td><strong>Leo</strong></td><td><span class="zh">自研 vs V3</span><span class="en">In-house vs V3</span></td><td class="num"><span class="delta-zero">+0.00</span></td><td class="num"><span class="delta-zero">−0.01</span></td><td class="num"><span class="delta-zero">−0.02</span></td><td class="num"><span class="delta-zero">−0.02</span></td><td class="num"><span class="delta-zero">+0.04</span></td></tr>
+<tr><td><strong>Kim</strong></td><td><span class="zh">自研 vs V2.5</span><span class="en">In-house vs V2.5</span></td><td class="num"><span class="delta-neg">−0.05</span></td><td class="num"><span class="delta-neg">−0.07</span></td><td class="num"><span class="delta-pos">+0.24</span></td><td class="num"><span class="delta-pos">+0.14</span></td><td class="num"><span class="delta-pos">+0.33</span></td></tr>
+<tr><td><strong>Kim</strong></td><td><span class="zh">自研 vs V3</span><span class="en">In-house vs V3</span></td><td class="num"><span class="delta-zero">+0.03</span></td><td class="num"><span class="delta-zero">+0.01</span></td><td class="num"><span class="delta-zero">−0.01</span></td><td class="num"><span class="delta-zero">+0.01</span></td><td class="num"><span class="delta-neg">−0.14</span></td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="method">
+<h2><span class="n">3</span><span class="zh">测评方法与评分维度</span><span class="en">Evaluation method and scoring dimensions</span></h2>
+<div class="note" style="background:linear-gradient(180deg,#eff6ff,#e8f0fe);border-color:#93c5fd">
+  <span class="zh">采用行业通用MOS测评方法，在盲评机制下，由3名不同的评委对自研或ElevenLabs TTS打分（界面不显示 ElevenLabs / 自研）后取平均分。</span>
+  <span class="en">We use the industry-standard MOS method under a blind protocol: three different raters score in-house or ElevenLabs TTS (the UI never shows ElevenLabs / in-house), then we take the average.</span>
+</div>
+
+<h3><span class="zh">维度边界定义</span><span class="en">Dimension boundaries</span></h3>
+<table>
+<thead><tr>
+  <th><span class="zh">维度</span><span class="en">Dimension</span></th>
+  <th><span class="zh">关注以下问题：</span><span class="en">Focuses on:</span></th>
+</tr></thead>
+<tbody>
+<tr><td><strong><span class="zh">准确性</span><span class="en">Accuracy</span></strong></td><td><span class="zh">错读、多读、乱读、重复读；严重含混导致听不出词</span><span class="en">Wrong, extra, garbled, or repeated words; severe slurring so a word cannot be heard</span></td></tr>
+<tr><td><strong><span class="zh">完整度</span><span class="en">Completeness</span></strong></td><td><span class="zh">漏读、句中 / 句末截断、读到一半消失</span><span class="en">Missing words, mid- or end-of-sentence cutoffs, dying out halfway</span></td></tr>
+<tr><td><strong><span class="zh">稳定性</span><span class="en">Stability</span></strong></td><td><span class="zh">破音、爆音、忽大忽小、音色突变</span><span class="en">Cracks, pops, wild loudness swings, sudden timbre jumps</span></td></tr>
+<tr><td><strong><span class="zh">韵律情感</span><span class="en">Prosody &amp; emotion</span></strong></td><td><span class="zh">节奏、停顿、重音、语气 / 情绪是否贴文本</span><span class="en">Rhythm, pauses, stress, and whether tone / emotion match the text</span></td></tr>
+<tr><td><strong><span class="zh">伪影</span><span class="en">Artifacts</span></strong></td><td><span class="zh">底噪、电流音、咔哒声、叠音残响、环境怪声</span><span class="en">Hiss, electrical buzz, clicks, echo leftovers, ambient odd sounds</span></td></tr>
+</tbody>
+</table>
+
+<table class="score-scale">
+<thead><tr>
+  <th><span class="zh">评分</span><span class="en">Rating</span></th>
+  <th><span class="zh">课堂可用性</span><span class="en">Classroom usability</span></th>
+</tr></thead>
+<tbody>
+<tr><td>1</td><td><span class="zh">几乎不能听 / 语义毁了 · 不能用</span><span class="en">Almost unlistenable / meaning destroyed · unusable</span></td></tr>
+<tr><td>2</td><td><span class="zh">明显硬伤，当示范不放心 · 不建议用</span><span class="en">Clear hard defects; unsafe as a model · not recommended</span></td></tr>
+<tr class="anchor"><td><strong>3</strong></td><td><span class="zh"><strong>一般可用</strong>：小瑕疵，不影响跟读主信息 · <strong>能用</strong></span><span class="en"><strong>Usable</strong>: small flaws that do not hide the main line for shadowing · <strong>good enough</strong></span></td></tr>
+<tr><td>4</td><td><span class="zh">清楚自然，仅细毛刺 · 推荐用</span><span class="en">Clear and natural, only fine nicks · recommended</span></td></tr>
+<tr><td>5</td><td><span class="zh">干净、准、稳、语气贴 · 示范级（宜少）</span><span class="en">Clean, accurate, stable, tone-fit · model-level (should be rare)</span></td></tr>
+</tbody>
+</table>
+
+<details class="rubric" open id="dim-acc">
+  <summary><span class="zh">① 准确性 Accuracy（读的对不对）</span><span class="en">① Accuracy (is it read correctly)</span></summary>
+  <div class="rubric-body">
+  <p class="ask"><span class="zh"><strong>维度描述：</strong>以「关键词 / 教学目标词是否读对、整句是否可懂」为主；1 处严重错读（改词、目标词错成别的）即可评低于2分。</span><span class="en"><strong>Dimension description:</strong> focus on whether key / target words are correct and the sentence is intelligible. One serious misread (changed word, target word as something else) can already be scored below 2.</span></p>
+  <table class="score-scale">
+    <thead><tr><th><span class="zh">分</span><span class="en">Score</span></th><th><span class="zh">标准</span><span class="en">Rubric</span></th></tr></thead>
+    <tbody>
+      <tr class="s1"><td>1</td><td><span class="zh">关键词大面积听不出；或乱读 / 反复重复；整句语义翻掉</span><span class="en">Key words largely unintelligible; or garbled / looping repeats; sentence meaning flipped</span></td></tr>
+      <tr class="s2"><td>2</td><td><span class="zh">1 处及以上明显错读 / 增读 / 重复，或将目标词（如 flamingo / come on）读到影响了学生的跟读</span><span class="en">One or more clear misreads / extras / repeats, or a target word (e.g. flamingo / come on) read in a way that hurts the student’s shadowing</span></td></tr>
+      <tr class="s3 anchor"><td>3</td><td><span class="zh">偶有极轻含混或非关键词轻微含糊，大意仍对；无重复、无改词</span><span class="en">Occasional very light slurring or a non-key word slightly vague; gist still correct; no repeats or word changes</span></td></tr>
+      <tr class="s4"><td>4</td><td><span class="zh">词准；最多 1 处极轻含混且不歧义</span><span class="en">Words accurate; at most one very light, unambiguous slur</span></td></tr>
+      <tr class="s5"><td>5</td><td><span class="zh">与文本一致，吐字清楚，无错读、无增读、无重复读</span><span class="en">Matches the text; clear articulation; no wrong, extra, or repeated words</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</details>
+
+<details class="rubric" open id="dim-comp">
+  <summary><span class="zh">② 完整度 Completeness（有没有说完）</span><span class="en">② Completeness (did it finish the line)</span></summary>
+  <div class="rubric-body">
+  <p class="ask"><span class="zh"><strong>维度描述：</strong>不存在「大段漏读」的情况。同时，关注词是否被读全，句末是否有被切开的情况，例如：句末只读了半个词。</span><span class="en"><strong>Dimension description:</strong> there are no long-passage omissions. Also check whether words are fully spoken and whether the ending is cut off — for example, only half of the last word is read.</span></p>
+  <table class="score-scale">
+    <thead><tr><th><span class="zh">分</span><span class="en">Score</span></th><th><span class="zh">标准</span><span class="en">Rubric</span></th></tr></thead>
+    <tbody>
+      <tr class="s1"><td>1</td><td><span class="zh">缺关键信息（问句没问完、指令没说）或开头 / 结尾截到句子不成立</span><span class="en">Missing key information (question unfinished, instruction not spoken) or the start / end is cut so the sentence does not stand</span></td></tr>
+      <tr class="s2"><td>2</td><td><span class="zh">明显漏词或半截词 / 半截句，仍能猜一点意思但不能当干净示范</span><span class="en">Clear missing or half words / half sentence; some gist remains but it is not a clean model</span></td></tr>
+      <tr class="s3 anchor"><td>3</td><td><span class="zh">词都在；句末略急但最后一个词仍可辨</span><span class="en">All words present; ending a bit rushed but the last word is still identifiable</span></td></tr>
+      <tr class="s4"><td>4</td><td><span class="zh">完整；最多收尾略紧，词仍完整可跟读</span><span class="en">Complete; ending may be slightly tight, but words stay whole and shadowable</span></td></tr>
+      <tr class="s5"><td>5</td><td><span class="zh">与文本一一对应，无漏读、截断，收尾完整</span><span class="en">One-to-one with the text; no omissions or cutoffs; clean finish</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</details>
+
+<details class="rubric" open id="dim-stab">
+  <summary><span class="zh">③ 稳定性 Stability（发声是否炸 / 飘）</span><span class="en">③ Stability (does the voice crack / drift)</span></summary>
+  <div class="rubric-body">
+  <p class="ask"><span class="zh"><strong>维度描述：</strong>几乎没有「中间缓冲」；测试原则：一次句尾炸裂 ≈ 整条不可用。强情绪句子（Come on! / Guess! / Wow!）是本测试的重点压。</span><span class="en"><strong>Dimension description:</strong> there is almost no “middle buffer.” Test principle: one end-of-line blowout ≈ the whole clip is unusable. Strong-emotion lines (Come on! / Guess! / Wow!) are the main stress of this test.</span></p>
+  <table class="score-scale">
+    <thead><tr><th><span class="zh">分</span><span class="en">Score</span></th><th><span class="zh">标准</span><span class="en">Rubric</span></th></tr></thead>
+    <tbody>
+      <tr class="s1"><td>1</td><td><span class="zh">破音 / 电音贯穿，或整句发飘失控，几乎无法听完</span><span class="en">Cracking / electric timbre throughout, or the whole line drifts out of control; almost impossible to finish listening</span></td></tr>
+      <tr class="s2"><td>2</td><td><span class="zh">有明显破音 / 电音 / 爆音（含单次句尾炸裂），听感刺耳，课堂不能当示范</span><span class="en">Clear crack / electric timbre / pop (including a single end-of-line blowout); harsh; cannot be a classroom model</span></td></tr>
+      <tr class="s3 anchor"><td>3</td><td><span class="zh">偶有轻微毛刺 / 发紧，一闪而过，不持续、不刺耳</span><span class="en">Occasional light rasp / tightness that flashes past; not sustained or harsh</span></td></tr>
+      <tr class="s4"><td>4</td><td><span class="zh">整体稳；最多极短瞬时不稳</span><span class="en">Mostly stable; at most a very brief instant of instability</span></td></tr>
+      <tr class="s5"><td>5</td><td><span class="zh">全程稳定，无破音、电音、爆音、明显忽大忽小或音色乱跳</span><span class="en">Stable throughout; no cracks, electric timbre, pops, obvious loudness swings, or wild timbre jumps</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</details>
+
+<details class="rubric" open id="dim-pros">
+  <summary><span class="zh">④ 韵律情感 Prosody &amp; Emotion</span><span class="en">④ Prosody &amp; Emotion</span></summary>
+  <div class="rubric-body">
+  <p class="ask"><span class="zh"><strong>维度描述：</strong>重点测评：(1) 停顿是否切错气口 (2) 重音是否在教学词 / 情感词上 (3) 语气是否匹配标点与场景（! / ? / 安抚句等）。</span><span class="en"><strong>Dimension description:</strong> Focus of scoring: (1) whether pauses cut the wrong breath points (2) whether stress is on teaching / emotion words (3) whether tone matches punctuation and scene (! / ? / soothing lines, etc.).</span></p>
+  <table class="score-scale">
+    <thead><tr><th><span class="zh">分</span><span class="en">Score</span></th><th><span class="zh">标准</span><span class="en">Rubric</span></th></tr></thead>
+    <tbody>
+      <tr class="s1"><td>1</td><td><span class="zh">语气完全反了或失控；或停顿碎成「逐词报站」，无法当老师话术</span><span class="en">Tone fully reversed or out of control; or pauses smashed into word-by-word station announcements — not teacher talk</span></td></tr>
+      <tr class="s2"><td>2</td><td><span class="zh">明显机械 / 机器人腔；或重音乱到目标词被淹没；或情绪与文本明显不符</span><span class="en">Clearly mechanical / robotic; or stress so wrong the target word is buried; or emotion clearly mismatches the text</span></td></tr>
+      <tr class="s3 anchor"><td>3</td><td><span class="zh">能听懂是老师在说；偶有略平、略冲或不自然小停顿，仍可用</span><span class="en">Still sounds like a teacher; occasional flatness, slight push, or unnatural small pauses; still usable</span></td></tr>
+      <tr class="s4"><td>4</td><td><span class="zh">节奏与语气较自然，贴合短句场景；仅细微不自然</span><span class="en">Rhythm and tone fairly natural and scene-fit; only tiny unnatural bits</span></td></tr>
+      <tr class="s5"><td>5</td><td><span class="zh">短句也清楚：气口对、重音对、情绪贴合（激动收尾有力但不炸——炸归稳定性）</span><span class="en">Clear even on short lines: breath, stress, and emotion fit (excited endings are strong but not blown — blowouts belong to Stability)</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</details>
+
+<details class="rubric" open id="dim-art">
+  <summary><span class="zh">⑤ 伪影 Artifacts（有没有底噪怪声）</span><span class="en">⑤ Artifacts (is there hiss or odd noise)</span></summary>
+  <div class="rubric-body">
+  <p class="ask"><span class="zh"><strong>维度描述：</strong>重点评估是否存在杂音、句首 / 句尾咔哒音、是否出现一声爆噪音、是否存在持续的电流底噪。合成前后的正常短静音、极轻房间感且不抢词的情况不算为伪影。</span><span class="en"><strong>Dimension description:</strong> Focus on whether there is noise, start/end clicks, a single burst, or a constant electrical floor. Normal short silence around synthesis, or a very light room tone that does not steal words, does not count as an artifact.</span></p>
+  <table class="score-scale">
+    <thead><tr><th><span class="zh">分</span><span class="en">Score</span></th><th><span class="zh">标准</span><span class="en">Rubric</span></th></tr></thead>
+    <tbody>
+      <tr class="s1"><td>1</td><td><span class="zh">强底噪 / 持续怪声 / 明显咔哒叠音，内容被盖住</span><span class="en">Strong hiss / constant odd noise / clear click-echo; content is covered</span></td></tr>
+      <tr class="s2"><td>2</td><td><span class="zh">明显底噪或间歇怪声，烦人，影响当示范听</span><span class="en">Clear hiss or intermittent odd noise; annoying; hurts use as a model</span></td></tr>
+      <tr class="s3 anchor"><td>3</td><td><span class="zh">轻微底噪或偶发轻杂音，不抢词</span><span class="en">Light hiss or occasional soft noise that does not steal words</span></td></tr>
+      <tr class="s4"><td>4</td><td><span class="zh">基本干净；需细听才察觉极轻底噪</span><span class="en">Mostly clean; only a very light floor if you listen hard</span></td></tr>
+      <tr class="s5"><td>5</td><td><span class="zh">干净，无明显底噪、电流底、咔哒、残响或其他外加怪声</span><span class="en">Clean; no obvious hiss, electrical floor, clicks, leftover echo, or other added odd sounds</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+</details>
+</section>
+
+<section id="testset">
+<h2><span class="n">4</span><span class="zh">测试集及覆盖场景</span><span class="en">Test set and covered scenarios</span></h2>
+<p class="lead"><span class="zh">142 条真实 AI 老师课堂短句下，每轮测评共产生1278次标注。评估「能否作为课上示范音」。测试集覆盖以下：</span><span class="en">Across 142 real AI-teacher classroom short lines, each evaluation round produces 1,278 ratings. We evaluate whether each clip can serve as an in-class model. The set covers:</span></p>
+<div class="bar-row"><div><span class="zh">课堂指令 / 互动短句</span><span class="en">Classroom cues / short interaction</span></div><div class="bar-track"><div class="bar-fill" style="width:16.9%"></div></div><div class="num">24 · 17%</div></div>
+<div class="bar-row"><div><span class="zh">疑问 / 感叹 / 情绪句</span><span class="en">Questions / exclamations / emotion</span></div><div class="bar-track"><div class="bar-fill" style="width:15.5%"></div></div><div class="num">22 · 16%</div></div>
+<div class="bar-row"><div><span class="zh">陈述与描述句</span><span class="en">Statements &amp; descriptions</span></div><div class="bar-track"><div class="bar-fill" style="width:13.4%"></div></div><div class="num">19 · 13%</div></div>
+<div class="bar-row"><div><span class="zh">专有名词 / 难词</span><span class="en">Proper nouns / hard words</span></div><div class="bar-track"><div class="bar-fill" style="width:12.0%"></div></div><div class="num">17 · 12%</div></div>
+<div class="bar-row"><div><span class="zh">长句（20+ 词）</span><span class="en">Long lines (20+ words)</span></div><div class="bar-track"><div class="bar-fill" style="width:10.6%"></div></div><div class="num">15 · 11%</div></div>
+<div class="bar-row"><div><span class="zh">自然拼读 / 音素段</span><span class="en">Phonics / phoneme spans</span></div><div class="bar-track"><div class="bar-fill" style="width:9.2%"></div></div><div class="num">13 · 9%</div></div>
+<div class="bar-row"><div><span class="zh">多短句连读 / 列举</span><span class="en">Multi-clause / lists</span></div><div class="bar-track"><div class="bar-fill" style="width:9.2%"></div></div><div class="num">13 · 9%</div></div>
+<div class="bar-row"><div><span class="zh">数字 / 字母 / 列表</span><span class="en">Numbers / letters / lists</span></div><div class="bar-track"><div class="bar-fill" style="width:7.7%"></div></div><div class="num">11 · 8%</div></div>
+<div class="bar-row"><div><span class="zh">唱歌 / 韵律文本</span><span class="en">Songs / rhythmic text</span></div><div class="bar-track"><div class="bar-fill" style="width:5.6%"></div></div><div class="num">8 · 6%</div></div>
+</section>
+
+<section id="scenes">
+<h2><span class="n">5</span><span class="zh">分场景偏好</span><span class="en">Preference by scenario</span></h2>
+<p class="lead"><span class="zh">在0909和0920的两次测评中，评委盲选不同场景下，更倾向使用自研TTS还是Elevenlabs</span><span class="en">In the 0909 and 0920 evaluations, raters blindly chose, by scenario, whether they preferred in-house TTS or ElevenLabs.</span></p>
+
+<h3><span class="zh">Leo：自研TTS对比Elevenlabs V2.5，已在多个场景的使用倾向上占优势，倾向性在除“专有名词 / 难词”“多短句连读 / 列举”方面，基本与Elevenlabs V3基本持平，在“数字 / 字母 / 列表”场景下优于V3。</span><span class="en">Leo: vs ElevenLabs V2.5, in-house TTS already leads in preference across most scenarios. Except for “proper nouns / hard words” and “multi-clause / lists,” preference is essentially even with ElevenLabs V3, and ahead of V3 on “numbers / letters / lists.”</span></h3>
+<table>
+<thead>
+<tr>
+  <th rowspan="2"><span class="zh">场景</span><span class="en">Scenario</span></th>
+  <th class="num" colspan="2">0909 · V2.5</th>
+  <th class="num" colspan="2">0920 · V3</th>
+</tr>
+<tr>
+  <th class="num"><span class="zh">倾向使用自研</span><span class="en">Prefer in-house</span></th>
+  <th class="num"><span class="zh">倾向使用V2.5</span><span class="en">Prefer V2.5</span></th>
+  <th class="num"><span class="zh">倾向使用自研</span><span class="en">Prefer in-house</span></th>
+  <th class="num"><span class="zh">倾向使用V3</span><span class="en">Prefer V3</span></th>
+</tr>
+</thead>
+<tbody>
+<tr><td><span class="zh">课堂指令 / 互动短句</span><span class="en">Classroom cues / short interaction</span></td><td class="num">57%</td><td class="num">43%</td><td class="num">58%</td><td class="num">42%</td></tr>
+<tr><td><span class="zh">疑问 / 感叹 / 情绪句</span><span class="en">Questions / exclamations / emotion</span></td><td class="num">46%</td><td class="num">54%</td><td class="num">38%</td><td class="num">62%</td></tr>
+<tr><td><span class="zh">陈述与描述句</span><span class="en">Statements &amp; descriptions</span></td><td class="num">63%</td><td class="num">37%</td><td class="num">48%</td><td class="num">52%</td></tr>
+<tr><td><span class="zh">专有名词 / 难词</span><span class="en">Proper nouns / hard words</span></td><td class="num">44%</td><td class="num">56%</td><td class="num">26%</td><td class="num">74%</td></tr>
+<tr><td><span class="zh">长句（20+ 词）</span><span class="en">Long lines (20+ words)</span></td><td class="num">73%</td><td class="num">27%</td><td class="num">43%</td><td class="num">57%</td></tr>
+<tr><td><span class="zh">自然拼读 / 音素段</span><span class="en">Phonics / phoneme spans</span></td><td class="num">58%</td><td class="num">42%</td><td class="num">50%</td><td class="num">50%</td></tr>
+<tr><td><span class="zh">多短句连读 / 列举</span><span class="en">Multi-clause / lists</span></td><td class="num">64%</td><td class="num">36%</td><td class="num">26%</td><td class="num">74%</td></tr>
+<tr><td><span class="zh">数字 / 字母 / 列表</span><span class="en">Numbers / letters / lists</span></td><td class="num">82%</td><td class="num">18%</td><td class="num">65%</td><td class="num">35%</td></tr>
+<tr><td><span class="zh">唱歌 / 韵律文本</span><span class="en">Songs / rhythmic text</span></td><td class="num">80%</td><td class="num">20%</td><td class="num">44%</td><td class="num">56%</td></tr>
+</tbody>
+</table>
+
+<h3><span class="zh">Max：当前自研TTS在不同场景下的使用倾向性上略低于V2.5和V3，在“专有名词 / 难词”“长句（20+ 词）”“数字 / 字母 / 列表”等方面是后续优化的重点。</span><span class="en">Max: current in-house TTS is slightly behind V2.5 and V3 in usage preference across scenarios. “Proper nouns / hard words,” “long lines (20+ words),” and “numbers / letters / lists” are the next optimization priorities.</span></h3>
+<table>
+<thead>
+<tr>
+  <th rowspan="2"><span class="zh">场景</span><span class="en">Scenario</span></th>
+  <th class="num" colspan="2">0909 · V2.5</th>
+  <th class="num" colspan="2">0920 · V3</th>
+</tr>
+<tr>
+  <th class="num"><span class="zh">倾向使用自研</span><span class="en">Prefer in-house</span></th>
+  <th class="num"><span class="zh">倾向使用V2.5</span><span class="en">Prefer V2.5</span></th>
+  <th class="num"><span class="zh">倾向使用自研</span><span class="en">Prefer in-house</span></th>
+  <th class="num"><span class="zh">倾向使用V3</span><span class="en">Prefer V3</span></th>
+</tr>
+</thead>
+<tbody>
+<tr><td><span class="zh">课堂指令 / 互动短句</span><span class="en">Classroom cues / short interaction</span></td><td class="num">47%</td><td class="num">53%</td><td class="num">13%</td><td class="num">87%</td></tr>
+<tr><td><span class="zh">疑问 / 感叹 / 情绪句</span><span class="en">Questions / exclamations / emotion</span></td><td class="num">36%</td><td class="num">64%</td><td class="num">35%</td><td class="num">65%</td></tr>
+<tr><td><span class="zh">陈述与描述句</span><span class="en">Statements &amp; descriptions</span></td><td class="num">42%</td><td class="num">58%</td><td class="num">43%</td><td class="num">57%</td></tr>
+<tr><td><span class="zh">专有名词 / 难词</span><span class="en">Proper nouns / hard words</span></td><td class="num">33%</td><td class="num">67%</td><td class="num">48%</td><td class="num">52%</td></tr>
+<tr><td><span class="zh">长句（20+ 词）</span><span class="en">Long lines (20+ words)</span></td><td class="num">33%</td><td class="num">67%</td><td class="num">37%</td><td class="num">63%</td></tr>
+<tr><td><span class="zh">自然拼读 / 音素段</span><span class="en">Phonics / phoneme spans</span></td><td class="num">46%</td><td class="num">54%</td><td class="num">50%</td><td class="num">50%</td></tr>
+<tr><td><span class="zh">多短句连读 / 列举</span><span class="en">Multi-clause / lists</span></td><td class="num">39%</td><td class="num">61%</td><td class="num">46%</td><td class="num">54%</td></tr>
+<tr><td><span class="zh">数字 / 字母 / 列表</span><span class="en">Numbers / letters / lists</span></td><td class="num">35%</td><td class="num">65%</td><td class="num">23%</td><td class="num">77%</td></tr>
+<tr><td><span class="zh">唱歌 / 韵律文本</span><span class="en">Songs / rhythmic text</span></td><td class="num">62%</td><td class="num">38%</td><td class="num">38%</td><td class="num">62%</td></tr>
+</tbody>
+</table>
+
+<h3><span class="zh">Kim：0909版本的Kim尚未优化，整体分场景倾向性低于Elevenlabs V2.5，优化后的自研TTS-Kim在0920测评中，分场景的使用倾向性方面已经与V3基本持平，“疑问 / 感叹 / 情绪句”和“唱歌 / 韵律文本”场景下的表现是后续优化重点。</span><span class="en">Kim: the 0909 Kim was not yet optimized, and scenario preference was below ElevenLabs V2.5. After optimization, in-house TTS-Kim in the 0920 evaluation is essentially even with V3 on scenario preference. “Questions / exclamations / emotion” and “songs / rhythmic text” are the next optimization priorities.</span></h3>
+<table>
+<thead>
+<tr>
+  <th rowspan="2"><span class="zh">场景</span><span class="en">Scenario</span></th>
+  <th class="num" colspan="2">0909 · V2.5</th>
+  <th class="num" colspan="2">0920 · V3</th>
+</tr>
+<tr>
+  <th class="num"><span class="zh">倾向使用自研</span><span class="en">Prefer in-house</span></th>
+  <th class="num"><span class="zh">倾向使用V2.5</span><span class="en">Prefer V2.5</span></th>
+  <th class="num"><span class="zh">倾向使用自研</span><span class="en">Prefer in-house</span></th>
+  <th class="num"><span class="zh">倾向使用V3</span><span class="en">Prefer V3</span></th>
+</tr>
+</thead>
+<tbody>
+<tr><td><span class="zh">课堂指令 / 互动短句</span><span class="en">Classroom cues / short interaction</span></td><td class="num">14%</td><td class="num">86%</td><td class="num">58%</td><td class="num">42%</td></tr>
+<tr><td><span class="zh">疑问 / 感叹 / 情绪句</span><span class="en">Questions / exclamations / emotion</span></td><td class="num">25%</td><td class="num">75%</td><td class="num">36%</td><td class="num">64%</td></tr>
+<tr><td><span class="zh">陈述与描述句</span><span class="en">Statements &amp; descriptions</span></td><td class="num">19%</td><td class="num">81%</td><td class="num">53%</td><td class="num">47%</td></tr>
+<tr><td><span class="zh">专有名词 / 难词</span><span class="en">Proper nouns / hard words</span></td><td class="num">19%</td><td class="num">81%</td><td class="num">47%</td><td class="num">53%</td></tr>
+<tr><td><span class="zh">长句（20+ 词）</span><span class="en">Long lines (20+ words)</span></td><td class="num">28%</td><td class="num">72%</td><td class="num">55%</td><td class="num">45%</td></tr>
+<tr><td><span class="zh">自然拼读 / 音素段</span><span class="en">Phonics / phoneme spans</span></td><td class="num">15%</td><td class="num">85%</td><td class="num">50%</td><td class="num">50%</td></tr>
+<tr><td><span class="zh">多短句连读 / 列举</span><span class="en">Multi-clause / lists</span></td><td class="num">20%</td><td class="num">80%</td><td class="num">41%</td><td class="num">59%</td></tr>
+<tr><td><span class="zh">数字 / 字母 / 列表</span><span class="en">Numbers / letters / lists</span></td><td class="num">8%</td><td class="num">92%</td><td class="num">53%</td><td class="num">47%</td></tr>
+<tr><td><span class="zh">唱歌 / 韵律文本</span><span class="en">Songs / rhythmic text</span></td><td class="num">29%</td><td class="num">71%</td><td class="num">37%</td><td class="num">63%</td></tr>
+</tbody>
+</table>
+</section>
+
+<section id="source">
+<h2><span class="n">6</span><span class="zh">数据口径</span><span class="en">Data notes</span></h2>
+<p class="lead"><span class="zh">两轮都是同 142 条冻结集、盲评 A/B、每音色 3 人全量。跨轮均分绝对值会受评委池影响。</span><span class="en">Both rounds use the same 142-item frozen set, blind A/B, and 3 full-set raters per voice. Absolute means can shift with the rater pool across rounds.</span></p>
+<table>
+<thead><tr>
+  <th><span class="zh">文件</span><span class="en">File</span></th>
+  <th><span class="zh">音色</span><span class="en">Voices</span></th>
+  <th><span class="zh">评委</span><span class="en">Raters</span></th>
+</tr></thead>
+<tbody>
+<tr>
+  <td><code>tts_eval_v2_0909</code></td>
+  <td>Max / Leo / Kim</td>
+  <td>jiayufei / lige / wuxianxin</td>
+</tr>
+<tr>
+  <td><code>tts_eval_v3_0920</code></td>
+  <td>Max / Leo / Kim</td>
+  <td>lige / pengqianya / shijiaoyang</td>
+</tr>
+</tbody></table>
+</section>
+
+</div>
+<script>
+(function () {
+  var KEY = "tts-eval-lang";
+  var TITLE = {
+    zh: "TTS 对比评测报告 · 自研 vs ElevenLabs V2.5 / V3",
+    en: "TTS Evaluation · In-house vs ElevenLabs V2.5 / V3"
+  };
+  function setLang(lang) {
+    lang = lang === "en" ? "en" : "zh";
+    document.documentElement.setAttribute("data-lang", lang);
+    document.documentElement.lang = lang === "en" ? "en" : "zh-CN";
+    document.title = TITLE[lang];
+    document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-set") === lang);
+    });
+    try { localStorage.setItem(KEY, lang); } catch (e) {}
+  }
+  document.querySelectorAll(".lang-switch button").forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      setLang(btn.getAttribute("data-set"));
+    });
+  });
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  setLang(saved === "en" ? "en" : "zh");
+})();
+</script>
+</body>
+</html>
